@@ -16,7 +16,8 @@ class SignUp extends Component {
   constructor(props) {
     super(props);
 
-    this.state = { // error text set to null makes the fields required
+    this.state = {
+      // error text set to null makes the fields required
       accountName: "",
       accountNameErrorText: null,
       birthDate: "",
@@ -162,20 +163,55 @@ class SignUp extends Component {
     }
   }
 
+  // async handleSubmit(event) {
+  //   event.preventDefault();
+
+  //   // check if username already exists
+  //   await fetch("https://jsonplaceholder.typicode.com/users")
+  //     .then((res) => res.json())
+  //     .then((json) => {
+  //       json.forEach((user) => {
+  //         if (user.username == this.state.accountName) {
+  //           console.log("eeeee")
+  //           this.setState({ accountNameErrorText: "username already exists" });
+  //         }
+  //       });
+  //     });
+
+  //   // const data = new FormData(event.currentTarget);
+  //   if (
+  //     this.state.accountNameErrorText == "" &&
+  //     this.state.birthErrorText == "" &&
+  //     this.state.emailErrorText == "" &&
+  //     this.state.phoneErrorText == "" &&
+  //     this.state.zipErrorText == "" &&
+  //     this.state.password1ErrorText == "" &&
+  //     this.state.password2ErrorText == ""
+  //   ) {
+  //     this.setState({
+  //       isLoggedIn: true,
+  //     });
+
+  //     let registeredUser = {
+  //       username: this.state.accountName,
+  //       address: {
+  //         street: this.state.password1,
+  //       },
+  //       company: {
+  //         catchPhrase: "This is a status headline",
+  //       },
+  //     };
+  //     localStorage.setItem("userObject", JSON.stringify(registeredUser));
+  //   } else {
+  //     this.setState({
+  //       isLoggedIn: false,
+  //     });
+  //   }
+  // }
+
   async handleSubmit(event) {
     event.preventDefault();
-
-    // check if username already exists
-    await fetch("https://jsonplaceholder.typicode.com/users")
-      .then((res) => res.json())
-      .then((json) => {
-        json.forEach((user) => {
-          if (user.username == this.state.accountName) {
-            console.log("eeeee")
-            this.setState({ accountNameErrorText: "username already exists" });
-          }
-        });
-      });
+    const url = (path) => `http://localhost:3000${path}`;
 
     // const data = new FormData(event.currentTarget);
     if (
@@ -187,11 +223,15 @@ class SignUp extends Component {
       this.state.password1ErrorText == "" &&
       this.state.password2ErrorText == ""
     ) {
-      this.setState({
-        isLoggedIn: true,
-      });
+      let registeredUser = { // needed for backend
+        username: this.state.accountName,
+        password: this.state.password1,
+        email: this.state.email,
+        zipcode: this.state.zip,
+        dob: this.state.birthDate,
+      };
 
-      let registeredUser = {
+      let localRegisteredUser = { // needed for original front end design
         username: this.state.accountName,
         address: {
           street: this.state.password1,
@@ -200,7 +240,25 @@ class SignUp extends Component {
           catchPhrase: "This is a status headline",
         },
       };
-      localStorage.setItem("userObject", JSON.stringify(registeredUser));
+
+      fetch(url("/register"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registeredUser),
+      })
+        .then((res) => res.json())
+        .then((res) => {
+          // console.log(res)
+          if (res.result === "failure") {
+            this.setState({ accountNameErrorText: "username already exists" });
+          }
+          if (res.result === "success") {
+            this.setState({
+              isLoggedIn: true,
+            });
+            localStorage.setItem("userObject", JSON.stringify(localRegisteredUser));
+          }
+        });
     } else {
       this.setState({
         isLoggedIn: false,
@@ -252,7 +310,8 @@ class SignUp extends Component {
                         error={
                           this.state.accountNameErrorText == "invalid format" ||
                           this.state.accountNameErrorText == "required field" ||
-                          this.state.accountNameErrorText == "username already exists"
+                          this.state.accountNameErrorText ==
+                            "username already exists"
                         }
                       />
                     </Grid>
